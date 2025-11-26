@@ -7,12 +7,10 @@
 wf(State) :- deploymentOk(State), nodesOk(State).
 
 % checks deployment policies for all components
-deploymentOk(s(P,_)) :-
-    findall(c(C,N), member(c(C,N), P), Cs), deploymentOk(Cs, P).
-
-deploymentOk([c(C,N)|Cs], P) :-
-    delta(C, N), deploymentOk(Cs, P).
-deploymentOk([], _).
+deploymentOk(s(P,_)) :- deploymentOk(P).
+deploymentOk([c(C,N)|Cs]) :-
+    delta(C, N), deploymentOk(Cs).
+deploymentOk([]).
 
 % checks node capacity constraints for all nodes
 nodesOk(State) :- nodes(Ns), nodesOk(Ns, State).
@@ -28,8 +26,9 @@ nodeOk(N, s(P,R)) :-
 % checks that σ = σ1 \oplus σ2 holds
 sep(s(P,R), s(P1,R1), s(P2,R2)) :-
     ground(P1), ground(R1), ground(P2), ground(R2), 
-    ord_union(P1, P2, P),
-    ord_intersection(P1, P2, []),
+    is_set(P1), is_set(P2), 
+    union(P1, P2, P),
+    intersection(P1, P2, []),
     checkCap(R, s(P1,R1), s(P2,R2)).
 % generates separations    
 sep(s(P,R), s(P1,R1), s(P2,R2)) :-
@@ -104,6 +103,7 @@ nodes(Ns) :- findall(N, node(N), Ns).
 cap(N, R, C) :- member(r(N,C), R).
 
 delta(C,N) :- component(C), node(N).
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % generating resource separations %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 part([X|Xs], [X|L1], L2) :-
