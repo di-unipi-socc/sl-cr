@@ -4,7 +4,7 @@
 :- op(500, xfy, ★). 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 
-wf(State) :- deploymentOk(State), nodes(Ns), nodesOk(State).
+wf(State) :- deploymentOk(State), nodesOk(State).
 
 % checks deployment policies for all components
 deploymentOk(s(P,_)) :-
