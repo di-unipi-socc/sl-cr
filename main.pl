@@ -30,7 +30,7 @@ sep(s(P,R), s(P1,R1), s(P2,R2)) :-
     union(P1, P2, P),
     intersection(P1, P2, []),
     checkCap(R, s(P1,R1), s(P2,R2)).
-% generates separations    
+% generates separations (ACHTUNG! it is EXP-time for large inputs!)
 sep(s(P,R), s(P1,R1), s(P2,R2)) :-
     part(P, P1, P2), split(R, R1, R2). 
 
