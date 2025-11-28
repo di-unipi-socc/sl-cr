@@ -5,7 +5,7 @@
 :- op(500, xfy, ★). 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 
-wf(State) :- deploymentPoliciesOk(State), nodesOk(State).
+wf(State) :- deploymentPoliciesOk(State), resourcesOk(State).
 
 % checks deployment policies for all components
 deploymentPoliciesOk(s(P,_)) :- deploymentPoliciesOk(P).
@@ -14,10 +14,10 @@ deploymentPoliciesOk([c(C,N)|Cs]) :-
 deploymentPoliciesOk([]).
 
 % checks node capacity constraints for all nodes
-nodesOk(State) :- allNodes(Ns), nodesOk(Ns, State).
-nodesOk([N|Ns], State) :-
-    hardwareOk(N, State), nodesOk(Ns, State).
-nodesOk([], _).
+resourcesOk(State) :- allNodes(Ns), resourcesOk(Ns, State).
+resourcesOk([N|Ns], State) :-
+    hardwareOk(N, State), resourcesOk(Ns, State).
+resourcesOk([], _).
 
 % checks that σ = σ1 \oplus σ2 holds
 sep(s(P,R), s(P1,R1), s(P2,R2)) :-
