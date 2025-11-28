@@ -28,10 +28,10 @@ sep(s(P,R), s(P1,R1), s(P2,R2)) :-
     is_set(P1), is_set(P2), 
     union(P1, P2, P),
     intersection(P1, P2, []),
-    checkCap(R, s(P1,R1), s(P2,R2)).
+    checkNodesCap(R, s(P1,R1), s(P2,R2)).
 
 % checks capacity constraints for separated states
-checkCap(R, s(_,R1), s(_,R2)) :- nodes(Ns), checkNodesCap(Ns, R, R1, R2).
+checkNodesCap(R, s(_,R1), s(_,R2)) :- nodes(Ns), checkNodesCap(Ns, R, R1, R2).
 
 checkNodesCap([N|Ns], R, R1, R2) :-
     cap(N, R,  Cap), cap(N, R1, Cap1), cap(N, R2, Cap2),
