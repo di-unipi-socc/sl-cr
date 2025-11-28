@@ -65,7 +65,7 @@ cr(s(P, R), s(Pok,Rok), s(Pko,Rko), s(Pnew, R)) :-
 
 repair(Pko, Rko, PkoFixed) :- repairComponents(Pko, Rko, [], PkoFixed).
 repairComponents([c(C,_)|Rest], Rko, PAcc, PFinal) :-
-    node(N), delta(C, N), 
+    node(N), delta(C, N),
     hardwareOk(N, s([c(C,N)|PAcc], Rko)), 
     repairComponents(Rest, Rko, [c(C,N)|PAcc], PFinal).
 repairComponents([], _, P, P).
