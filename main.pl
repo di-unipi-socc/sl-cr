@@ -1,5 +1,5 @@
 :- set_prolog_flag(stack_limit, 20_000_000_000).
-:- discontiguous holds/2, sep/3.
+:- discontiguous sep/3.
 
 %%%%%%%%%%%%%% Infix ★ star operator %%%%%%%%%%%%%%%%%%%%%%%
 :- op(500, xfy, ★). 
@@ -14,13 +14,10 @@ deploymentPoliciesOk([c(C,N)|Cs]) :-
 deploymentPoliciesOk([]).
 
 % checks node capacity constraints for all nodes
-nodesOk(State) :- nodes(Ns), nodesOk(Ns, State).
+nodesOk(State) :- allNodes(Ns), nodesOk(Ns, State).
 nodesOk([N|Ns], State) :-
-    nodeOk(N, State), nodesOk(Ns, State).
+    hardwareOk(N, State), nodesOk(Ns, State).
 nodesOk([], _).
-
-nodeOk(N, s(P,R)) :-
-    usedHardware(P, N, Used), cap(N, R, Cap), Used =< Cap.
 
 % checks that σ = σ1 \oplus σ2 holds
 sep(s(P,R), s(P1,R1), s(P2,R2)) :-
@@ -31,7 +28,7 @@ sep(s(P,R), s(P1,R1), s(P2,R2)) :-
     checkNodesCap(R, s(P1,R1), s(P2,R2)).
 
 % checks capacity constraints for separated states
-checkNodesCap(R, s(_,R1), s(_,R2)) :- nodes(Ns), checkNodesCap(Ns, R, R1, R2).
+checkNodesCap(R, s(_,R1), s(_,R2)) :- allNodes(Ns), checkNodesCap(Ns, R, R1, R2).
 
 checkNodesCap([N|Ns], R, R1, R2) :-
     cap(N, R,  Cap), cap(N, R1, Cap1), cap(N, R2, Cap2),
@@ -54,12 +51,12 @@ holds(not(F), S) :- \+ holds(F, S).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% continuous reasoning  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 crSep(s(P,R), s(Pok,Rok), s(Pko,Rko)) :-
-    partition(componentOk(s(P,R)), P, Pok, Pko),              % applies componentOk/2 to all c(C,N) in state s(P,R)
+    partition(placementOk(s(P,R)), P, Pok, Pko),                  % applies placementOk/2 to all c(C,N) in state s(P,R)
     ok(Pok, R, Rok), ko(R, Rok, Rko).
 
 cr(s(P, R), Sok, Sko, Sok) :-
     crSep(s(P, R), Sok, Sko), holds(emp, Sko), wf(Sok).
-cr(s(P, R), s(Pok,Rok), s(PkoFixed,Rko), s(Pnew, R)) :-
+cr(s(P, R), s(Pok,Rok), s(Pko,Rko), s(Pnew, R)) :-
     crSep(s(P, R), s(Pok,Rok), s(Pko,Rko)),                   % performs a CR separation  
     holds(wf ★ not(wf), s(P, R), s(Pok,Rok), s(Pko,Rko)),     % checks that Sko is not well-formed (not needed: crSep/3 already ensures this)
     repair(Pko, Rko, PkoFixed),                               % repairs the faulty part Sko to obtain SkoFixed
@@ -69,22 +66,24 @@ cr(s(P, R), s(Pok,Rok), s(PkoFixed,Rko), s(Pnew, R)) :-
 repair(Pko, Rko, PkoFixed) :- repairComponents(Pko, Rko, [], PkoFixed).
 repairComponents([c(C,_)|Rest], Rko, PAcc, PFinal) :-
     node(N), delta(C, N), 
-    nodeOk(N, s([c(C,N)|PAcc], Rko)), 
+    hardwareOk(N, s([c(C,N)|PAcc], Rko)), 
     repairComponents(Rest, Rko, [c(C,N)|PAcc], PFinal).
 repairComponents([], _, P, P).
 
 %%%%%%%%%%%%%%%% Utilities %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-ok(Pok, _, Rok) :- nodes(Ns), findall(r(N,Used), ( member(N, Ns), usedHardware(Pok, N, Used) ), Rok).
+ok(Pok, _, Rok) :- allNodes(Ns), findall(r(N,Used), ( member(N, Ns), usedHardware(Pok, N, Used) ), Rok).
 
 ko(R, Rok, Rko) :- findall(r(N,CapKo),( member(r(N,Cap), R), cap(N, Rok, Used), CapKo is Cap - Used ), Rko).
+
+hardwareOk(N, s(P,R)) :- usedHardware(P, N, Used), cap(N, R, Cap), Used =< Cap.
   
 usedHardware(P, N, Used) :- findall(H, ( member(c(C,N), P), req_hw(C, H) ), Hs), sum_list(Hs, Used).
 
-componentOk(S, c(C,N)) :- nodeOk(N, S), delta(C, N).
+placementOk(S, c(C,N)) :- hardwareOk(N, S), delta(C, N).
 
-components(Cs) :- findall(C, component(C), Cs).
+components(Cs) :- findall(C, component(C), Cs). 
 
-nodes(Ns) :- findall(N, node(N), Ns).
+allNodes(Ns) :- findall(N, node(N), Ns).
 
 cap(N, R, C) :- member(r(N,C), R).
 
@@ -95,14 +94,12 @@ delta(C,N) :- component(C), node(N).
 sep(s(P,R), s(P1,R1), s(P2,R2)) :-
     part(P, P1, P2), split(R, R1, R2). 
 
-part([X|Xs], [X|L1], L2) :-
-    part(Xs, L1, L2).
-part([X|Xs], L1, [X|L2]) :-
-    part(Xs, L1, L2).
+part([X|Xs], [X|L1], L2) :- part(Xs, L1, L2).
+part([X|Xs], L1, [X|L2]) :- part(Xs, L1, L2).
 part([], [], []).
 
 split([r(N,C)|Rs], [r(N,C1)|R1], [r(N,C2)|R2]) :-
-    between(0, C, C1), Max2 is C - C1, between(0, Max2, C2),
+    between(0, C, C1), Max2 is C - C1, between(0, Max2, C2), 
     split(Rs, R1, R2).
 split([], [], []).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

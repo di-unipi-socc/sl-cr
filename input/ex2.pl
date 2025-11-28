@@ -1,6 +1,6 @@
 %%% query:
 % initial_state(S), crSep(S, Sok, Sko).
-% initial_state(S), cr(S, Sok, SkoFixed, SFinal).
+% initial_state(S), cr(S, Sok, Sko, Sfixed).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Nodes (100)
