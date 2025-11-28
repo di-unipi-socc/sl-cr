@@ -1,4 +1,5 @@
 :- set_prolog_flag(stack_limit, 20_000_000_000).
+:- use_module(library(apply)).  % per partition/4
 :- discontiguous sep/3.
 
 %%%%%%%%%%%%%% Infix ★ star operator %%%%%%%%%%%%%%%%%%%%%%%
