@@ -58,11 +58,10 @@ cr(s(P, R), Sok, Sko, Sok) :-
     crSep(s(P, R), Sok, Sko), holds(emp, Sko), wf(Sok).
 cr(s(P, R), s(Pok,Rok), s(Pko,Rko), s(Pnew, R)) :-
     crSep(s(P, R), s(Pok,Rok), s(Pko,Rko)),                   % performs a CR separation  
-    % holds(wf ★ not(wf), s(P, R), s(Pok,Rok), s(Pko,Rko)),     % checks that Sko is not well-formed (not needed: crSep/3 already ensures this)
+    holds(wf ★ not(wf), s(P, R), s(Pok,Rok), s(Pko,Rko)),     % checks that Sko is not well-formed (not needed: crSep/3 already ensures this)
     repair(Pko, Rko, PkoFixed),                               % repairs the faulty part Sko to obtain SkoFixed
-    union(Pok, PkoFixed, Ptmp), sort(Ptmp, Pnew) %,
-    % wf(s(Pnew,R))
-    .                                            % checks that the repaired state is well-formed (not needed: repair/3 already ensures this)                       
+    union(Pok, PkoFixed, Ptmp), sort(Ptmp, Pnew),
+    wf(s(Pnew,R)).                                            % checks that the repaired state is well-formed (not needed: repair/3 already ensures this)                       
 
 repair(Pko, Rko, PkoFixed) :- repairComponents(Pko, Rko, [], PkoFixed).
 repairComponents([c(C,_)|Rest], Rko, PAcc, PFinal) :-
