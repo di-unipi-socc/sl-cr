@@ -11,7 +11,7 @@ wf(State) :- deploymentPoliciesOk(State), resourcesOk(State).
 % checks deployment policies for all components
 deploymentPoliciesOk(s(P,_)) :- deploymentPoliciesOk(P).
 deploymentPoliciesOk([c(C,N)|Cs]) :-
-    delta(C, N), deploymentPoliciesOk(Cs).
+    pi(C, N), deploymentPoliciesOk(Cs).
 deploymentPoliciesOk([]).
 
 % checks node capacity constraints for all nodes
@@ -33,7 +33,7 @@ checkNodesCap(R, s(_,R1), s(_,R2)) :- allNodes(Ns), checkNodesCap(Ns, R, R1, R2)
 
 checkNodesCap([N|Ns], R, R1, R2) :-
     cap(N, R,  Cap), cap(N, R1, Cap1), cap(N, R2, Cap2),
-    Cap1 + Cap2 =< Cap,
+    Cap >= Cap1 + Cap2,
     checkNodesCap(Ns, R, R1, R2).
 checkNodesCap([], _, _, _).
 
@@ -66,7 +66,7 @@ cr(s(P, R), s(Pok,Rok), s(Pko,Rko), s(Pnew, R)) :-
 
 repair(Pko, Rko, PkoFixed) :- repairComponents(Pko, Rko, [], PkoFixed).
 repairComponents([c(C,_)|Rest], Rko, PAcc, PFinal) :-
-    node(N), delta(C, N),
+    node(N), pi(C, N),
     hardwareOk(N, s([c(C,N)|PAcc], Rko)), 
     repairComponents(Rest, Rko, [c(C,N)|PAcc], PFinal).
 repairComponents([], _, P, P).
@@ -80,7 +80,7 @@ hardwareOk(N, s(P,R)) :- usedHardware(P, N, Used), cap(N, R, Cap), Used =< Cap.
   
 usedHardware(P, N, Used) :- findall(H, ( member(c(C,N), P), req_hw(C, H) ), Hs), sum_list(Hs, Used).
 
-placementOk(S, c(C,N)) :- hardwareOk(N, S), delta(C, N).
+placementOk(S, c(C,N)) :- hardwareOk(N, S), pi(C, N).
 
 components(Cs) :- findall(C, component(C), Cs). 
 
@@ -88,19 +88,19 @@ allNodes(Ns) :- findall(N, node(N), Ns).
 
 cap(N, R, C) :- member(r(N,C), R).
 
-delta(C,N) :- component(C), node(N).
+pi(C,N) :- component(C), node(N).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % generates separations (ACHTUNG! it is EXP-time for large inputs!)
-sep(s(P,R), s(P1,R1), s(P2,R2)) :-
-    part(P, P1, P2), split(R, R1, R2). 
+% sep(s(P,R), s(P1,R1), s(P2,R2)) :-
+%     part(P, P1, P2), split(R, R1, R2). 
 
-part([X|Xs], [X|L1], L2) :- part(Xs, L1, L2).
-part([X|Xs], L1, [X|L2]) :- part(Xs, L1, L2).
-part([], [], []).
+% part([X|Xs], [X|L1], L2) :- part(Xs, L1, L2).
+% part([X|Xs], L1, [X|L2]) :- part(Xs, L1, L2).
+% part([], [], []).
 
-split([r(N,C)|Rs], [r(N,C1)|R1], [r(N,C2)|R2]) :-
-    between(0, C, C1), Max2 is C - C1, between(0, Max2, C2), 
-    split(Rs, R1, R2).
-split([], [], []).
+% split([r(N,C)|Rs], [r(N,C1)|R1], [r(N,C2)|R2]) :-
+%     between(0, C, C1), Max2 is C - C1, between(0, Max2, C2), 
+%     split(Rs, R1, R2).
+% split([], [], []).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
