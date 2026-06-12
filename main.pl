@@ -94,15 +94,15 @@ chi(S) :- true. % dummy predicate, needs to be instantiated with cross-partition
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % generates separations (ACHTUNG! it is EXP-time for large inputs!)
-% sep(s(P,R), s(P1,R1), s(P2,R2)) :-
-%     part(P, P1, P2), split(R, R1, R2). 
+sep(s(P,R), s(P1,R1), s(P2,R2)) :-
+    part(P, P1, P2), split(R, R1, R2). 
 
-% part([X|Xs], [X|L1], L2) :- part(Xs, L1, L2).
-% part([X|Xs], L1, [X|L2]) :- part(Xs, L1, L2).
-% part([], [], []).
+part([X|Xs], [X|L1], L2) :- part(Xs, L1, L2).
+part([X|Xs], L1, [X|L2]) :- part(Xs, L1, L2).
+part([], [], []).
 
-% split([r(N,C)|Rs], [r(N,C1)|R1], [r(N,C2)|R2]) :-
-%     between(0, C, C1), Max2 is C - C1, between(0, Max2, C2), 
-%     split(Rs, R1, R2).
-% split([], [], []).
+split([r(N,C)|Rs], [r(N,C1)|R1], [r(N,C2)|R2]) :-
+    between(0, C, C1), Max2 is C - C1, between(0, Max2, C2), 
+    split(Rs, R1, R2).
+split([], [], []).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
