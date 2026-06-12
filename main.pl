@@ -56,13 +56,13 @@ crSep(s(P,R), s(Pok,Rok), s(Pko,Rko)) :-
     ok(Pok, R, Rok), ko(R, Rok, Rko).
 
 cr(s(P, R), Sok, Sko, Sok) :-
-    crSep(s(P, R), Sok, Sko), holds(emp, Sko), wf(Sok).
+    crSep(s(P, R), Sok, Sko), holds(emp, Sko), wf(Sok), chi(s(Pnew,R)).
 cr(s(P, R), s(Pok,Rok), s(Pko,Rko), s(Pnew, R)) :-
     crSep(s(P, R), s(Pok,Rok), s(Pko,Rko)),                   % performs a CR separation  
     holds(wf ★ not(wf), s(P, R), s(Pok,Rok), s(Pko,Rko)),     % checks that Sko is not well-formed (not strictly needed: crSep/3 already ensures this)
     repair(Pko, Rko, PkoFixed),                               % repairs the faulty part Sko to obtain SkoFixed
     union(Pok, PkoFixed, Ptmp), sort(Ptmp, Pnew),
-    wf(s(Pnew,R)).                                            % checks that the repaired state is well-formed (not strictly needed: repair/3 already ensures this)                       
+    wf(s(Pnew,R)), chi(s(Pnew,R)).                                           % checks that the repaired state is well-formed (not strictly needed: repair/3 already ensures this)                       
 
 repair(Pko, Rko, PkoFixed) :- repairComponents(Pko, Rko, [], PkoFixed).
 repairComponents([c(C,_)|Rest], Rko, PAcc, PFinal) :-
@@ -89,6 +89,8 @@ allNodes(Ns) :- findall(N, node(N), Ns).
 cap(N, R, C) :- member(r(N,C), R).
 
 pi(C,N) :- component(C), node(N).
+
+chi(S) :- true. % dummy predicate, needs to be instantiated with cross-partition checks for more complex examples
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % generates separations (ACHTUNG! it is EXP-time for large inputs!)
