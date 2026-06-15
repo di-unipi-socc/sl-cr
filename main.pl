@@ -56,7 +56,7 @@ crSep(s(P,R), s(Pok,Rok), s(Pko,Rko)) :-
     ok(Pok, R, Rok), ko(R, Rok, Rko).
 
 cr(s(P, R), Sok, Sko, Sok) :-
-    crSep(s(P, R), Sok, Sko), holds(emp, Sko), wf(Sok), chi(s(Pnew,R)).
+    crSep(s(P, R), Sok, Sko), holds(emp, Sko), wf(Sok), chi(s(P,R)).
 cr(s(P, R), s(Pok,Rok), s(Pko,Rko), s(Pnew, R)) :-
     crSep(s(P, R), s(Pok,Rok), s(Pko,Rko)),                   % performs a CR separation  
     holds(wf ★ not(wf), s(P, R), s(Pok,Rok), s(Pko,Rko)),     % checks that Sko is not well-formed (not strictly needed: crSep/3 already ensures this)
