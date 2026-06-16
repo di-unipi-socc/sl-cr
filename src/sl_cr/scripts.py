@@ -6,16 +6,19 @@ from pathlib import Path
 from time import time
 from typing import Any
 
+import ray
+from ray import tune
 from swiplserver import PrologMQI
 
-from sl_cr.app_builder import AppBuilder
+from sl_cr.builders.application import AppBuilder
+from sl_cr.builders.infrastructure import InfrBuilder
 from sl_cr.config import DEFAULT_RESULTS_DIR
 from sl_cr.experiment import Experiment
-from sl_cr.infr_builder import InfrBuilder
 from sl_cr.policies import get_policies
 from sl_cr.search_space import (
+    complete_search_space,
+    debug_search_space,
     fixed_config,
-    ray_search_space,
 )
 
 
@@ -30,12 +33,12 @@ def run_experiment(config: dict[str, Any], path: Path):
 
     application = AppBuilder(
         components=config["components"],
-        component_storage=config["component_storage"],
+        seed=config["seed"],
     ).build()
     infrastructure = InfrBuilder(
         topology=config["topology"],
         nodes=config["nodes"],
-        node_storage=config["node_storage"],
+        seed=config["seed"],
         update_policies=get_policies(),
     ).build()
 
@@ -54,15 +57,14 @@ def run_experiment(config: dict[str, Any], path: Path):
 def main():
     """Run the Ray Tune grid."""
 
-    import ray
-    from ray import tune
-
     ray.init(address="auto")
+
     start_time = time()
     ray_run_config = tune.RunConfig(storage_path=DEFAULT_RESULTS_DIR.resolve())
     tuner = tune.Tuner(
-        tune.with_resources(sl_cr_grid, {"cpu": 2}),
-        param_space=ray_search_space(),
+        tune.with_resources(sl_cr_grid, {"cpu": 4}),
+        # sl_cr_grid,
+        param_space=complete_search_space(),
         run_config=ray_run_config,
     )
     tuner.fit()
@@ -79,7 +81,6 @@ def debug():
 
 
 def _trial_output_path() -> Path:
-    from ray import tune
 
     context = tune.get_context()
     storage = context.get_storage()

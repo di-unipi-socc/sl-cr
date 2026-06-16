@@ -21,17 +21,15 @@ from .facts import (
     prolog_term_to_mapping,
 )
 from .telemetry import RunTelemetry
+from random import shuffle
 
 
 @dataclass(frozen=True, slots=True)
-class PrologResult:
-    """Result and metrics for one Prolog placement query."""
+class TimedQueryResult:
+    """Raw MQI result plus timeout status."""
 
-    mapping: dict[str, str]
-    query: str
-    elapsed_s: float
-    inferences: int | None
-    used_cr: bool
+    result: Any
+    timed_out: bool
 
 
 class PrologSession:
@@ -42,9 +40,11 @@ class PrologSession:
         prolog_thread: PrologThread,
         *,
         telemetry: RunTelemetry,
+        timeout: int | None = None,
     ):
         self.thread = prolog_thread
         self.telemetry = telemetry
+        self.timeout = timeout
         self.has_saved_placement = False
         self.saved_mapping: dict[str, str] = {}
         self._consult_main()
@@ -57,25 +57,24 @@ class PrologSession:
         capacities: dict[str, int],
         requirements: dict[str, int],
         components: list[str],
-    ) -> PrologResult:
+    ) -> dict[str, str]:
         """Run CR or non-CR placement through the Prolog core."""
 
-        self._reset_assets()
-        self._assert_assets(capacities, requirements)
+        self.telemetry.reset()
+        self.reset_kb()
+        self.assert_kb(capacities, requirements)
 
         resources = capacities_to_term(capacities)
-        if mode == "non-cr" or not self.has_saved_placement:
+        if mode == "base" or not self.has_saved_placement:
             query = self._repair_query(_dummy_placement(components), resources)
-            used_cr = False
         elif mode == "cr":
             query = self._cr_query(mapping_to_placement(self.saved_mapping), resources)
-            used_cr = True
         else:
             raise ValueError(f"Unsupported reasoning mode {mode!r}")
 
         before = self._inferences()
         start = perf_counter()
-        result = self._query_one(query)
+        result, timed_out = self._query_one(query)
         elapsed = perf_counter() - start
         after = self._inferences()
         mapping = {}
@@ -84,15 +83,14 @@ class PrologSession:
             mapping = prolog_term_to_mapping(result["PFinal"])
             self.save_placement(mapping)
 
-        inferences = None if before is None or after is None else after - before
-        self.telemetry.update(mapping=mapping, query_s=elapsed, inferences=inferences)
-        return PrologResult(
+        inferences = None if (before is None or after is None) else after - before
+        self.telemetry.update(
             mapping=mapping,
-            query=query,
-            elapsed_s=elapsed,
+            query_s=elapsed,
             inferences=inferences,
-            used_cr=used_cr,
+            timed_out=timed_out,
         )
+        return mapping
 
     def save_placement(self, mapping: dict[str, str]):
         """Retract and assert the current placement fact for future CR steps."""
@@ -116,12 +114,14 @@ class PrologSession:
         ):
             self._query_bool(f"dynamic({predicate})")
 
-    def _reset_assets(self):
+    def reset_kb(self):
         for predicate in ("node(_)", "component(_)", "req_hw(_,_)", "caplist(_)"):
             self._query_bool(f"retractall({predicate})")
 
-    def _assert_assets(self, capacities: dict[str, int], requirements: dict[str, int]):
-        for node in capacities:
+    def assert_kb(self, capacities: dict[str, int], requirements: dict[str, int]):
+        nodes = capacities.keys()
+        shuffle(list(nodes))
+        for node in nodes:
             self._query_bool(f"assert(node({prolog_atom(node)}))")
         for component, requirement in requirements.items():
             component_atom = prolog_atom(component)
@@ -138,31 +138,35 @@ class PrologSession:
 
     def _inferences(self) -> int | None:
         try:
-            result = self._query_one("statistics(inferences, I)")
+            result, _ = self._query_one("statistics(inferences, I)")
             return int(result["I"])
         except Exception:
             return None
 
-    def _query_one(self, query: str) -> dict[str, Any]:
-        result = timed_async_query(self.thread, query)
-        if result is False:
+    def _query_one(self, query: str) -> tuple[dict[str, Any] | None, bool]:
+        result = timed_async_query(self.thread, query, timeout=self.timeout)
+        timed_out = result.timed_out
+        raw_result = result.result
+        if raw_result is None:
+            return None, timed_out
+        if raw_result is False:
             # raise RuntimeError(f"Prolog query failed: {query}")
-            return None
-        if result is True:
-            return {}
-        if isinstance(result, list):
-            if not result:
+            return None, timed_out
+        if raw_result is True:
+            return {}, timed_out
+        if isinstance(raw_result, list):
+            if not raw_result:
                 raise RuntimeError(f"Prolog query returned no solutions: {query}")
-            first = result[0]
+            first = raw_result[0]
             if not isinstance(first, dict):
                 raise RuntimeError(f"Unexpected Prolog result: {first!r}")
-            return first
-        if isinstance(result, dict):
-            return result
-        raise RuntimeError(f"Unexpected Prolog result: {result!r}")
+            return first, timed_out
+        if isinstance(raw_result, dict):
+            return raw_result, timed_out
+        raise RuntimeError(f"Unexpected Prolog result: {raw_result!r}")
 
     def _query_bool(self, query: str) -> bool:
-        return bool(timed_async_query(self.thread, query))
+        return bool(timed_async_query(self.thread, query, timeout=self.timeout).result)
 
 
 def _dummy_placement(components: list[str]) -> str:
@@ -175,14 +179,16 @@ def timed_async_query(
     prolog: PrologThread,
     query: str,
     timeout: int | None = None,
-):
+) -> TimedQueryResult:
+    timed_out = False
     try:
         prolog.query_async(query, find_all=False)
         r = prolog.query_async_result(wait_timeout_seconds=timeout)
     except PrologResultNotAvailableError:
-        print(f"Timeout: {query} took longer than {timeout} seconds.")
+        print(f"Timeout: {query[:10]}... took longer than {timeout} seconds.")
+        timed_out = True
         r = None
     finally:
         prolog.cancel_query_async()
 
-    return r
+    return TimedQueryResult(result=r, timed_out=timed_out)

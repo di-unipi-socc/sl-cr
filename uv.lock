@@ -1187,6 +1187,7 @@ source = { editable = "." }
 dependencies = [
     { name = "eclypse" },
     { name = "matplotlib" },
+    { name = "networkx" },
     { name = "pandas" },
     { name = "ray", extra = ["tune"] },
     { name = "seaborn" },
@@ -1197,6 +1198,7 @@ dependencies = [
 requires-dist = [
     { name = "eclypse", editable = "../eclypse" },
     { name = "matplotlib", specifier = ">=3.8.0" },
+    { name = "networkx", specifier = ">=3.0" },
     { name = "pandas", specifier = ">=2.2.0" },
     { name = "ray", extras = ["tune"], specifier = ">=2.9.0" },
     { name = "seaborn", specifier = ">=0.13.0" },

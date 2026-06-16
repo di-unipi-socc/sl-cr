@@ -29,7 +29,7 @@ class ReasoningMode(StrEnum):
     """Reasoner variants used in the experiments."""
 
     CR = "cr"
-    NON_CR = "non-cr"
+    BASE = "base"
 
 
 @dataclass(slots=True)
@@ -54,10 +54,10 @@ class PLStrategy(PlacementStrategy):
         requirements = application_requirements(application)
         components = list(application.nodes)
 
-        result = self.prolog.solve(
+        mapping = self.prolog.solve(
             mode=str(self.mode),
             capacities=capacities,
             requirements=requirements,
             components=components,
         )
-        return dict(result.mapping)
+        return mapping
