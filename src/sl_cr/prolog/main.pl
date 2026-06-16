@@ -1,4 +1,6 @@
-:- set_prolog_flag(stack_limit, 20_000_000_000).
+:- set_prolog_flag(answer_write_options,[max_depth(0)]). % write answers' text entirely
+:- set_prolog_flag(stack_limit, 128 000 000 000).
+:- set_prolog_flag(last_call_optimisation, true).
 :- use_module(library(apply)).  % per partition/4
 :- discontiguous sep/3.
 
@@ -59,7 +61,7 @@ cr(s(P, R), Sok, Sko, Sok) :-
     crSep(s(P, R), Sok, Sko), holds(emp, Sko), wf(Sok), chi(s(P,R)).
 cr(s(P, R), s(Pok,Rok), s(Pko,Rko), s(Pnew, R)) :-
     crSep(s(P, R), s(Pok,Rok), s(Pko,Rko)),                   % performs a CR separation  
-    holds(wf ★ not(wf), s(P, R), s(Pok,Rok), s(Pko,Rko)),     % checks that Sko is not well-formed (not strictly needed: crSep/3 already ensures this)
+    % holds(wf ★ not(wf), s(P, R), s(Pok,Rok), s(Pko,Rko)),     % checks that Sko is not well-formed (not strictly needed: crSep/3 already ensures this)
     repair(Pko, Rko, PkoFixed),                               % repairs the faulty part Sko to obtain SkoFixed
     union(Pok, PkoFixed, Ptmp), sort(Ptmp, Pnew),
     wf(s(Pnew,R)), % checks that the repaired state is well-formed (not strictly needed: repair/3 already ensures this)                       

@@ -11,7 +11,7 @@ def get_policies() -> list[Callable]:
     return [
         policies.failure.kill_nodes(
             0.5,
-            revive_probability=0.5,
+            revive_probability=0.95,
             revived_availability=1,
         ),
     ]

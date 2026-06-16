@@ -9,6 +9,8 @@ from typing import (
     Mapping,
 )
 
+from eclypse.utils._logging import format_log_kv
+
 from eclypse.graph import (
     Application,
     Infrastructure,
@@ -18,12 +20,13 @@ from eclypse.simulation import (
     SimulationConfig,
 )
 
+from .config import TIMEOUT
 from .metrics import get_metrics
 from .pl_strategy import (
     PLStrategy,
     ReasoningMode,
 )
-from .prolog_session import PrologSession
+from .prolog_session import PrologSession, _dummy_placement
 from .telemetry import RunTelemetry
 
 
@@ -44,6 +47,7 @@ class Experiment:
         prolog = PrologSession(
             self.prolog_thread,
             telemetry=telemetry,
+            timeout=int(self.config.get("timeout", TIMEOUT)),
         )
         sim_config = SimulationConfig(
             seed=int(self.config["seed"]),
@@ -51,8 +55,11 @@ class Experiment:
             events=get_metrics(telemetry),
             path=self.output_path,
             include_default_metrics=False,
-            # log_level="TRACE",
+            log_level="CRITICAL",
         )
+
+        sim_config.logger.info(f"Experiment | {format_log_kv(**self.config)}")
+
         simulation = Simulation(
             infrastructure=self.infrastructure,
             simulation_config=sim_config,
@@ -63,11 +70,12 @@ class Experiment:
         )
 
         self.output_path.mkdir(parents=True, exist_ok=True)
-        dump_facts(
-            infrastructure=self.infrastructure,
-            application=self.application,
-            output_path=self.output_path,
-        )
+        # dump_facts(
+        #     infrastructure=self.infrastructure,
+        #     application=self.application,
+        #     output_path=self.output_path,
+        #     prolog=prolog,
+        # )
 
         simulation.run()
 
@@ -76,6 +84,7 @@ def dump_facts(
     infrastructure: Infrastructure,
     application: Application,
     output_path: Path,
+    prolog: PrologSession,
 ):
     """Write a Prolog file with facts extracted from the current ECLYPSE state (Infrastructure and Application)."""
     with open(output_path / "kb.pl", "w") as f:
@@ -98,5 +107,11 @@ def dump_facts(
         f.write("\n" + "\n".join(req_hws) + "\n")
 
         # CAP LIST
-        f.write(f"\n{caplist}\n")
+
+        # QUERY
+        query = prolog._repair_query(
+            _dummy_placement(application.nodes()),
+            caplist[8:-2],
+        )
+        f.write("\n" + query + "\n")
     infrastructure.logger.info(f"Dumped facts to {output_path / 'kb.pl'}")
