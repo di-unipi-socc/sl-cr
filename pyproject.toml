@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "eclypse",
+    "ipykernel>=7.3.0",
     "matplotlib>=3.8.0",
     "networkx>=3.0",
     "pandas>=2.2.0",

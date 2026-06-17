@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 from eclypse.report.metrics import metric
-from eclypse.placement import Placement
+from eclypse.workflow.event import (
+    EventRole,
+    every,
+)
 
 from .telemetry import RunTelemetry
 
@@ -23,13 +26,18 @@ def get_metrics(telemetry: RunTelemetry) -> list:
     def placement_migrations(_, __) -> int:
         return telemetry.last_migrations or float("inf")
 
-    @metric.application()
-    def is_mapped(_, placement: Placement, __) -> int:
-        return int(bool(placement.mapping))
+    @metric.infrastructure()
+    def is_mapped(_, __) -> int:
+        return int(bool(telemetry.last_mapping))
 
     @metric.infrastructure()
     def query_timeout(_, __) -> int:
         return int(bool(telemetry.last_timed_out))
+
+    @every(steps=1, role=EventRole.CALLBACK)
+    def telemetry_flush(_):
+        print("TELE")
+        telemetry.reset()
 
     return [
         prolog_query_seconds,
@@ -37,4 +45,5 @@ def get_metrics(telemetry: RunTelemetry) -> list:
         placement_migrations,
         is_mapped,
         query_timeout,
+        telemetry_flush,
     ]

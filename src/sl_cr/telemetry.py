@@ -18,7 +18,7 @@ class RunTelemetry:
     previous_mapping: dict[str, str] = field(default_factory=dict)
 
     def reset(self):
-        """Clear values exported by the next metric read."""
+        """Clear values exported by the last Prolog query."""
 
         self.last_query_s = None
         self.last_inferences = None
