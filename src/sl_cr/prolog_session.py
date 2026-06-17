@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from random import Random
 from time import perf_counter
 from typing import Any
 
@@ -21,7 +22,6 @@ from .facts import (
     prolog_term_to_mapping,
 )
 from .telemetry import RunTelemetry
-from random import shuffle
 
 
 @dataclass(frozen=True, slots=True)
@@ -41,10 +41,12 @@ class PrologSession:
         *,
         telemetry: RunTelemetry,
         timeout: int | None = None,
+        seed: int | None = None,
     ):
         self.thread = prolog_thread
         self.telemetry = telemetry
         self.timeout = timeout
+        self.rnd = Random(seed)
         self.has_saved_placement = False
         self.saved_mapping: dict[str, str] = {}
         self._consult_main()
@@ -118,8 +120,8 @@ class PrologSession:
             self._query_bool(f"retractall({predicate})")
 
     def assert_kb(self, capacities: dict[str, int], requirements: dict[str, int]):
-        nodes = capacities.keys()
-        shuffle(list(nodes))
+        nodes = list(capacities.keys())
+        self.rnd.shuffle(nodes)
         for node in nodes:
             self._query_bool(f"assert(node({prolog_atom(node)}))")
         for component, requirement in requirements.items():

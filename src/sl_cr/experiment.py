@@ -48,6 +48,7 @@ class Experiment:
             self.prolog_thread,
             telemetry=telemetry,
             timeout=int(self.config.get("timeout", TIMEOUT)),
+            seed=int(self.config["seed"]),
         )
         sim_config = SimulationConfig(
             seed=int(self.config["seed"]),

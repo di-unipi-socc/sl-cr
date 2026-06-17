@@ -36,6 +36,7 @@ class AppBuilder:
             },
             edge_assets={"latency": latency(init_fn_or_value=0)},
             include_default_assets=False,
+            seed=self.seed,
         )
         components = [f"c{i}" for i in range(1, self.components + 1)]
         for component in components:

@@ -51,6 +51,7 @@ class InfrBuilder:
             },
             include_default_assets=False,
             update_policies=self.update_policies,
+            seed=self.seed,
         )
 
         for node in graph.nodes:

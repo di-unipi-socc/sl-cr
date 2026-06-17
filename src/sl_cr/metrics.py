@@ -36,7 +36,6 @@ def get_metrics(telemetry: RunTelemetry) -> list:
 
     @every(steps=1, role=EventRole.CALLBACK)
     def telemetry_flush(_):
-        print("TELE")
         telemetry.reset()
 
     return [
