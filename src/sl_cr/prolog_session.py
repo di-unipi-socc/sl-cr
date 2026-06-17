@@ -60,7 +60,6 @@ class PrologSession:
     ) -> dict[str, str]:
         """Run CR or non-CR placement through the Prolog core."""
 
-        self.telemetry.reset()
         self.reset_kb()
         self.assert_kb(capacities, requirements)
 

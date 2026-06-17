@@ -12,10 +12,10 @@ from sl_cr.config import (
 fixed_config = {
     "mode": "cr",
     "steps": 20,
-    "nodes": 1024,
+    "nodes": 512,
     "components": 50,
     "topology": "ER",
-    "seed": 45,
+    "seed": 3997,
     "timeout": TIMEOUT,
 }
 
@@ -39,8 +39,8 @@ def debug_search_space() -> dict:
         "steps": 20,
         "timeout": TIMEOUT,
         "mode": tune.grid_search(["cr", "base"]),
-        "nodes": 4096,
-        "components": 500,
+        "nodes": 512,
+        "components": 50,
         "topology": "ER",
         "seed": 3997,
     }

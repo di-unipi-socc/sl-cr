@@ -36,7 +36,7 @@ Outputs are written by ECLYPSE reporters under Ray trial folders:
 - Prolog inferences when available from `statistics(inferences, I)`
 - migrations from previous placement
 - timeout flag for the latest Prolog placement query
-- serialized placement mapping
+- whether the latest Prolog query produced a valid placement
 - number of overloaded nodes after placement
 - placed components versus total components
 
