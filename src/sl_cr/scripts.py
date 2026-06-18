@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from time import time
+from time import perf_counter
 from typing import Any
 
 import ray
@@ -18,13 +18,11 @@ from sl_cr.policies import get_policies
 from sl_cr.search_space import (
     complete_search_space,
     debug_search_space,
-    fixed_config,
 )
 
 
 def sl_cr_grid(config: dict[str, Any]):
     """Run one Ray Tune trial."""
-
     run_experiment(config, _trial_output_path())
 
 
@@ -54,38 +52,38 @@ def run_experiment(config: dict[str, Any], path: Path):
             ).run()
 
 
-def main():
-    """Run the Ray Tune grid."""
-
+def run_ray_tune(debug: bool = False):
     ray.init(address="auto")
 
-    start_time = time()
-    ray_run_config = tune.RunConfig(storage_path=DEFAULT_RESULTS_DIR.resolve())
+    param_space = debug_search_space() if debug else complete_search_space()
+    storage_path = DEFAULT_RESULTS_DIR / "debug" if debug else DEFAULT_RESULTS_DIR
+
+    start_time = perf_counter()
+    ray_run_config = tune.RunConfig(storage_path=storage_path.resolve())
     tuner = tune.Tuner(
         tune.with_resources(sl_cr_grid, {"cpu": 4}),
         # sl_cr_grid,
-        param_space=complete_search_space(),
+        param_space=param_space,
         run_config=ray_run_config,
     )
     tuner.fit()
-    print("Elapsed time: ", time() - start_time)
+    print("Elapsed time: ", perf_counter() - start_time)
+
+
+def cr():
+    """Run the Ray Tune grid."""
+    run_ray_tune(debug=False)
 
 
 def debug():
     """Run one local experiment without Ray Tune."""
-
-    start_time = time()
-    output_path = DEFAULT_RESULTS_DIR / "debug" / "output"
-    run_experiment(fixed_config, output_path)
-    print("Elapsed time: ", time() - start_time)
+    run_ray_tune(debug=True)
 
 
 def _trial_output_path() -> Path:
 
     context = tune.get_context()
     storage = context.get_storage()
-    if storage is None:
-        return DEFAULT_RESULTS_DIR / "local" / "output"
     return (
         Path(storage.storage_fs_path)
         / storage.experiment_dir_name

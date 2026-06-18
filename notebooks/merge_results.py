@@ -54,7 +54,7 @@ def merge_ray_tune_results(root_dir: str, prefix: str = "sl_cr_grid_") -> pd.Dat
     return df
 
 
-def clean_and_dump(df: pd.DataFrame, output_file: Path = "merged_results.parquet"):
+def clean_and_dump(df: pd.DataFrame, output_file: Path = "results.parquet"):
 
     df.to_parquet(output_file, index=False)
     print(f"Successfully saved merged results to {output_file}")
@@ -67,16 +67,17 @@ if __name__ == "__main__":
         description="Merge Ray Tune results into a single Parquet file."
     )
     parser.add_argument(
-        "--root_dir",
         "-r",
+        "--root_dir",
         type=str,
         default="../results",
         help="Root directory containing experiment subdirectories.",
     )
     parser.add_argument(
+        "-o",
         "--output",
         type=str,
-        default="merged_results.parquet",
+        default="results.parquet",
         help="Output Parquet file path.",
     )
     parser.add_argument(
