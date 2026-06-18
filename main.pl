@@ -36,5 +36,5 @@ allNodes(Ns) :- findall(N, node(N), Ns).
 
 cap(N, R, C) :- member(r(N,C), R).
 
-pi(C,N) :- true. % can capture deployment constraints, e.g., pi(C,N) :- allowed(C,N).
+pi(_,_) :- true. % can capture deployment constraints, e.g., pi(C,N) :- allowed(C,N).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
