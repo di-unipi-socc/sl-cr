@@ -16,7 +16,7 @@ dependencies = [
 ]
 
 [project.scripts]
-cr = "sl_cr.scripts:main"
+cr = "sl_cr.scripts:cr"
 debug = "sl_cr.scripts:debug"
 
 [build-system]

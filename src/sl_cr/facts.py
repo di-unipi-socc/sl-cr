@@ -17,7 +17,7 @@ class Facts:
     """Infrastructure, application, and placement facts."""
 
     nodes: list[str]
-    capacities: dict[str, int]
+    capacities: dict[str, float]
     components: list[str]
     requirements: dict[str, int]
     placement: dict[str, str]
@@ -33,20 +33,21 @@ def mapping_to_placement(mapping: dict[str, str]) -> str:
     return f"[{items}]"
 
 
-def capacities_to_term(capacities: dict[str, int]) -> str:
+def capacities_to_term(capacities: dict[str, float]) -> str:
     """Return a Prolog resource list term from capacity mapping."""
 
     items = ",".join(
-        f"r({prolog_atom(node)},{capacity})" for node, capacity in capacities.items()
+        f"r({prolog_atom(node)},{_prolog_number(capacity)})"
+        for node, capacity in capacities.items()
     )
     return f"[{items}]"
 
 
-def infrastructure_capacities(infrastructure) -> dict[str, int]:
+def infrastructure_capacities(infrastructure) -> dict[str, float]:
     """Translate current ECLYPSE infrastructure nodes into caplist facts."""
 
     return {
-        str(node): int(attrs.get("storage", 0))
+        str(node): float(attrs.get("storage", 0))
         for node, attrs in infrastructure.nodes(data=True)
     }
 
@@ -109,3 +110,9 @@ def prolog_atom(value: str) -> str:
     """Quote a Python string as a Prolog atom."""
 
     return quote_prolog_identifier(str(value))
+
+
+def _prolog_number(value: float) -> str:
+    """Format a Python number as a Prolog numeric literal."""
+
+    return repr(float(value))
