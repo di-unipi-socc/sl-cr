@@ -121,7 +121,7 @@ class PrologSession:
 
     def assert_kb(self, capacities: dict[str, int], requirements: dict[str, int]):
         nodes = list(capacities.keys())
-        self.rnd.shuffle(nodes)
+        # self.rnd.shuffle(nodes)
         for node in nodes:
             self._query_bool(f"assert(node({prolog_atom(node)}))")
         for component, requirement in requirements.items():
