@@ -29,7 +29,7 @@ def complete_search_space() -> dict:
         "nodes": tune.grid_search([250, 500, 750, 1000]),
         "components": tune.grid_search([50, 100, 200, 300]),
         "topology": tune.grid_search(["ER", "BA", "IAG"]),
-        "seed": tune.grid_search([3997, 151195, 300425]),
+        "seed": tune.grid_search([3997, 151195, 300425, 180192, 481183]),
     }
 
 
@@ -39,8 +39,8 @@ def debug_search_space() -> dict:
         "mode": tune.grid_search(["cr", "base"]),
         "timeout": TIMEOUT,
         "steps": 10,
-        "nodes": 1024,
-        "components": 300,
-        "topology": "IAG",
+        "nodes": 1500,
+        "components": 100,
+        "topology": "ER",
         "seed": 3997,
     }
