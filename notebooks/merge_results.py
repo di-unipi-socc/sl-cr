@@ -24,30 +24,34 @@ def merge_ray_tune_results(root_dir: str, prefix: str = "sl_cr_grid_") -> pd.Dat
     tot_skipped = 0
     i = 0
     for exp in experiment_dirs:
-        i += 1
-        infr_csv_path = exp / "output" / "csv" / "infrastructure.csv"
-        params_path = exp / "params.json"
+        try:
+            i += 1
+            infr_csv_path = exp / "output" / "csv" / "infrastructure.csv"
+            params_path = exp / "params.json"
 
-        if not infr_csv_path.exists():
-            print(f"Skipping {exp}: infrastructure.csv not found")
+            if not infr_csv_path.exists():
+                print(f"Skipping {exp}: infrastructure.csv not found")
+                tot_skipped += 1
+                continue  # Skip if infrastructure.csv is missing (experiment not ended)
+
+            df = pd.read_csv(infr_csv_path)
+
+            if params_path.exists():
+                with open(params_path, "r", encoding="utf-8") as f:
+                    params = json.load(f)
+                    for key, value in params.items():
+                        df[key] = value
+
+            all_data.append(df)
+            print(
+                f"Processed {i}/{tot_processed}",
+                end=("\r" if i < tot_processed else "\n"),
+                flush=True,
+            )
+            tot_processed += 1
+        except Exception as e:
+            print(f"Error processing {exp}: {e}")
             tot_skipped += 1
-            continue  # Skip if infrastructure.csv is missing (experiment not ended)
-
-        df = pd.read_csv(infr_csv_path)
-
-        if params_path.exists():
-            with open(params_path, "r", encoding="utf-8") as f:
-                params = json.load(f)
-                for key, value in params.items():
-                    df[key] = value
-
-        all_data.append(df)
-        print(
-            f"Processed {i}/{tot_processed}",
-            end=("\r" if i < tot_processed else "\n"),
-            flush=True,
-        )
-        tot_processed += 1
 
     print(f"Processed: {tot_processed}, Skipped: {tot_skipped}")
     df = pd.concat(all_data, ignore_index=True)
