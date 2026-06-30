@@ -1,19 +1,19 @@
-:- set_prolog_flag(answer_write_options,[max_depth(0)]). % write answers' text entirely
+:- set_prolog_flag(answer_write_options,[max_depth(0)]).
 :- set_prolog_flag(stack_limit, 128 000 000 000).
 :- set_prolog_flag(last_call_optimisation, true).
 :- use_module(library(apply)).  % per partition/4
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% continuous reasoning  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Lemma 3.10
+
 crSep(s(P,R), s(Pok,Rok), s(Pko,Rko)) :-
     partition(placementOk(s(P,R)), P, Pok, Pko),  % applies placementOk/2 to all c(C,N) in state s(P,R)
     rOk(Pok, P, Rok), rKo(R, Rok, Rko).           % computes Rok and Rko based on Pok and R
 
-% Corollary 3.11
+
 cr(s(P, R), Sok, s([],_), Sok) :- crSep(s(P, R), Sok, s([],_)). 
 cr(s(P, R), s(Pok,Rok), s(Pko,Rko), s(Pnew, R)) :-
-    crSep(s(P, R), s(Pok,Rok), s(Pko,Rko)),                   % performs a CR separation  
-    repair(Pko, Rko, PkoFixed),   % Corollary 3.11            % repairs the faulty part Sko to obtain SkoFixed
+    dif(Pko, []), crSep(s(P, R), s(Pok,Rok), s(Pko,Rko)),     % performs a CR separation  
+    repair(Pko, Rko, PkoFixed),                               % repairs the faulty part Sko to obtain SkoFixed
     union(Pok, PkoFixed, Ptmp), sort(Ptmp, Pnew).
 
 repair(Pko, Rko, PkoFixed) :- repairComponents(Pko, Rko, [], PkoFixed).
