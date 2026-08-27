@@ -1,3 +1,8 @@
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/logo-dark.png">
+  <img width="450" alt="sl-cr logo" src="assets/logo-light.png">
+</picture>
+
 # Continuous Reasoning Prototype for Application Placement
 
 This repository contains a small declarative Prolog prototype for continuous
@@ -144,4 +149,3 @@ the structure of the continuous-reasoning construction: OK/KO separation,
 resource-budget computation, local repair, and recomposition. It does not
 implement optimisation criteria, ranking of alternative repairs, or performance
 engineering.
-
